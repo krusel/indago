@@ -16,6 +16,7 @@ public class Constraints {
 	private static final ArrayList< LinearConstraint > firstExactlyWithOneOtherOrNoneConstraints = new ArrayList< >();
 	private static final ArrayList< LinearConstraint > firstImpliesAtLeastOneOtherConstraints = new ArrayList< >();
 	private static final ArrayList< LinearConstraint > firstEqualsSumOfOthersConstraint = new ArrayList<>();
+	private static final ArrayList< LinearConstraint > varsForHammingDistanceConstraint = new ArrayList<>();
 
 	public static LinearConstraint atMostOneConstraint( final int arity ) {
 		while ( arity > atMostOneConstraints.size() - 1 ) {
@@ -104,5 +105,33 @@ public class Constraints {
 			firstEqualsSumOfOthersConstraint.add( c );
 		}
 		return firstEqualsSumOfOthersConstraint.get( arity );
+	}
+
+	public static Function varsForHammingDistanceConstraint( final int fctNum ) {
+		assert ( fctNum < 4 );
+		while ( fctNum > varsForHammingDistanceConstraint.size() - 1 ) {
+			final double[] coefficients = new double[ 3 ];
+			if ( varsForHammingDistanceConstraint.size() == 0 ) {
+				Arrays.fill( coefficients, 1 );
+				final LinearConstraint c = new LinearConstraint( coefficients, LE, 2, Domains.getDefaultBinaryArgumentDomains( 3 ) );
+				varsForHammingDistanceConstraint.add( c );
+			} else if ( varsForHammingDistanceConstraint.size() == 1 ) {
+				Arrays.fill( coefficients, -1 );
+				coefficients[ 0 ] = 1;
+				final LinearConstraint c = new LinearConstraint( coefficients, LE, 0, Domains.getDefaultBinaryArgumentDomains( 3 ) );
+				varsForHammingDistanceConstraint.add( c );
+			} else if ( varsForHammingDistanceConstraint.size() == 2 ) {
+				Arrays.fill( coefficients, -1 );
+				coefficients[ 1 ] = 1;
+				final LinearConstraint c = new LinearConstraint( coefficients, LE, 0, Domains.getDefaultBinaryArgumentDomains( 3 ) );
+				varsForHammingDistanceConstraint.add( c );
+			} else if ( varsForHammingDistanceConstraint.size() == 3 ) {
+				Arrays.fill( coefficients, -1 );
+				coefficients[ 2 ] = 1;
+				final LinearConstraint c = new LinearConstraint( coefficients, LE, 0, Domains.getDefaultBinaryArgumentDomains( 3 ) );
+				varsForHammingDistanceConstraint.add( c );
+			}
+		}
+		return varsForHammingDistanceConstraint.get( fctNum );
 	}
 }
