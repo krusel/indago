@@ -427,11 +427,11 @@ public class FactorGraphFactory {
 		// - u - v + w LE 0
 		if ( numberOfCopies == 2 ) {
 			for ( final IndicatorNode hypvar : mfg.getVarmap().valuesAs() ) {
-//				if ( !( hypvar instanceof SegmentNode ) ) {
+				if ( !( hypvar instanceof SegmentNode ) ) {
 					final Variable var = Variables.binary();
 					variables.add( var );
-//					unaries.add( Factors.unary( var, 0.0, -1000.0 ) ); // seems to work somewhat for SegmentNode
-					unaries.add( Factors.unary( var, 0.0, hypvar.getCost() ) );
+					unaries.add( Factors.unary( var, 0.0, -500.0 ) ); // seems to work somewhat for SegmentNode
+					//unaries.add( Factors.unary( var, 0.0, -10.0 ) );
 
 					final List< Variable > varsToConnect = new ArrayList< Variable >();
 					varsToConnect.add( var );
@@ -442,7 +442,7 @@ public class FactorGraphFactory {
 					constraints.add( new Factor( Constraints.varsForHammingDistanceConstraint( 1 ), varsToConnect ) );
 					constraints.add( new Factor( Constraints.varsForHammingDistanceConstraint( 2 ), varsToConnect ) );
 					constraints.add( new Factor( Constraints.varsForHammingDistanceConstraint( 3 ), varsToConnect ) );
-//				}
+				}
 			}	
 		}
 		
