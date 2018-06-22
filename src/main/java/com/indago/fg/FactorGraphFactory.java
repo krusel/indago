@@ -350,8 +350,138 @@ public class FactorGraphFactory {
 		return new MappedFactorGraph( fg, varmap, mapper );
 	}
 
-	public static MappedDiverseFactorGraph extendFactorGraphForDiversity( final MappedFactorGraph mfg, final int numberOfCopies, final List< ProgressListener > progressListeners ) {
-		
+//	public static MappedDiverseFactorGraph extendFactorGraphForDiversity( final MappedFactorGraph mfg, final int numberOfCopies, final List< ProgressListener > progressListeners ) {
+//		
+//		for ( final ProgressListener progressListener : progressListeners ) {
+//			progressListener.resetProgress( "Extending factor graph for diversity...", numberOfCopies );
+//		}
+//		
+//		List< Bimap< IndicatorNode, Variable > > varMaps = new ArrayList<>();
+//		List< AssignmentMapper< Variable, IndicatorNode > > assMappers = new ArrayList<>();
+//
+//		// components of combined factor graph
+//		final ArrayList< Variable > variables = new ArrayList<>();
+//		final ArrayList< Factor > unaries = new ArrayList<>();
+//		final ArrayList< Factor > constraints = new ArrayList<>();
+//		
+//		// make necessary number of copies of original factor graph
+//		for ( int i = 0; i < numberOfCopies; i++ ) {
+//			// create new varmap, collect all variables
+//			final Bimap< IndicatorNode, Variable > varmap = new Bimap<>();
+//			for ( final IndicatorNode hypvar : mfg.getVarmap().valuesAs() ) {
+//				final Variable var = Variables.binary();
+//				varmap.add( hypvar, var );
+//				variables.add( var );
+//			}
+//			varMaps.add( varmap );
+//			
+//			// add copies of unaries
+//			for ( final Factor constraint : mfg.getFg().getUnaries() ) {
+//				final List< Variable > vars = new ArrayList<>(); 
+//				for ( final Variable var : constraint.getVariables() ) {
+//					vars.add( varmap.getB( mfg.getVarmap().getA( var ) ) );
+//				}
+//				unaries.add( new Factor( constraint.getFunction(), vars ) );
+//			}
+//			
+//			// add copies of constraints
+//			for ( final Factor constraint : mfg.getFg().getConstraints() ) {
+//				final List< Variable > vars = new ArrayList<>(); 
+//				for ( final Variable var : constraint.getVariables() ) {
+//					vars.add( varmap.getB( mfg.getVarmap().getA( var ) ) );
+//				}
+//				constraints.add( new Factor( constraint.getFunction(), vars ) );
+//			}
+//
+//			// create new assignment mapper
+//			final AssignmentMapper< Variable, IndicatorNode > mapper = new AssignmentMapper< Variable, IndicatorNode >() {
+//				@Override
+//				public Assignment< IndicatorNode > map( final Assignment< ? super Variable > assignment ) {
+//					return new Assignment< IndicatorNode >() {
+//
+//						@Override
+//						public boolean isAssigned( final IndicatorNode variable ) {
+//							return assignment.isAssigned( varmap.getB( variable ) );
+//						}
+//
+//						@Override
+//						public int getAssignment( final IndicatorNode variable ) {
+//							return assignment.getAssignment( varmap.getB( variable ) );
+//						}
+//					};
+//				}
+//			};
+//			assMappers.add( mapper );
+//
+//			for ( final ProgressListener progressListener : progressListeners ) {
+//				progressListener.hasProgressed();
+//			}
+//		}
+//		
+//		// add diversity cost
+//		// Hamming-distance between segmentation hypotheses
+//		// necessary constraints for variables u, v, w:
+//		//   u + v + w LE 2
+//		//   u - v - w LE 0
+//		// - u + v - w LE 0
+//		// - u - v + w LE 0
+//		if ( numberOfCopies == 2 ) {
+//			for ( final IndicatorNode hypvar : mfg.getVarmap().valuesAs() ) {
+//				
+//				double hammingCost;
+//				
+//				// different costs for chosen hypotheses in diverse solutions
+//				// variable == 0 iff same assignment in both solutions
+//				// variable == 1 iff different assignments
+//				if ( hypvar instanceof SegmentNode ) {
+//					hammingCost = -500.0;
+//				}
+//				else if ( hypvar instanceof AppearanceHypothesis ) {
+//					hammingCost = -500.0;
+//				}
+//				else if ( hypvar instanceof DisappearanceHypothesis ) {
+//					hammingCost = -500.0;
+//				}
+//				else if ( hypvar instanceof MovementHypothesis ) {
+//					hammingCost = -500.0;
+//				}
+//				else if ( hypvar instanceof DivisionHypothesis ) {
+//					hammingCost = -500.0;
+//				}
+//				else {
+//					hammingCost = 0.0;
+//				}
+//				
+//				if ( hammingCost != 0.0 ) {
+//					final Variable var = Variables.binary();
+//					variables.add( var );
+//					
+//					unaries.add( Factors.unary( var, 0.0, hammingCost ) );
+//	
+//					final List< Variable > varsToConnect = new ArrayList< Variable >();
+//					varsToConnect.add( var );
+//					for ( Bimap< IndicatorNode, Variable > varmap : varMaps ) {
+//						varsToConnect.add( varmap.getB( hypvar ) );
+//					}
+//					constraints.add( new Factor( Constraints.varsForHammingDistanceConstraint( 0 ), varsToConnect ) );
+//					constraints.add( new Factor( Constraints.varsForHammingDistanceConstraint( 1 ), varsToConnect ) );
+//					constraints.add( new Factor( Constraints.varsForHammingDistanceConstraint( 2 ), varsToConnect ) );
+//					constraints.add( new Factor( Constraints.varsForHammingDistanceConstraint( 3 ), varsToConnect ) );
+//				}
+//			}	
+//		}
+//		
+//		final UnaryCostConstraintGraph fg = new UnaryCostConstraintGraph( variables, unaries, constraints );
+//		
+//		return new MappedDiverseFactorGraph( fg, varMaps, assMappers );
+//	}
+
+
+	public static MappedDiverseFactorGraph extendFactorGraphForDiversity( final MappedFactorGraph mfg,
+			final int numberOfCopies, final double diverseSegmentCost, final double diverseAppearanceCost,
+			final double diverseDisappearanceCost, final double diverseMovementCost, final double diverseDivisionCost,
+			final List<ProgressListener> progressListeners) {
+
 		for ( final ProgressListener progressListener : progressListeners ) {
 			progressListener.resetProgress( "Extending factor graph for diversity...", numberOfCopies );
 		}
@@ -427,12 +557,37 @@ public class FactorGraphFactory {
 		// - u - v + w LE 0
 		if ( numberOfCopies == 2 ) {
 			for ( final IndicatorNode hypvar : mfg.getVarmap().valuesAs() ) {
-				if ( !( hypvar instanceof SegmentNode ) ) {
+				
+				double hammingCost;
+				
+				// different costs for chosen hypotheses in diverse solutions
+				// variable == 0 iff same assignment in both solutions
+				// variable == 1 iff different assignments
+				if ( hypvar instanceof SegmentNode ) {
+					hammingCost = diverseSegmentCost;
+				}
+				else if ( hypvar instanceof AppearanceHypothesis ) {
+					hammingCost = diverseAppearanceCost;
+				}
+				else if ( hypvar instanceof DisappearanceHypothesis ) {
+					hammingCost = diverseDisappearanceCost;
+				}
+				else if ( hypvar instanceof MovementHypothesis ) {
+					hammingCost = diverseMovementCost;
+				}
+				else if ( hypvar instanceof DivisionHypothesis ) {
+					hammingCost = diverseDivisionCost;
+				}
+				else {
+					hammingCost = 0.0;
+				}
+				
+				if ( hammingCost != 0.0 ) {
 					final Variable var = Variables.binary();
 					variables.add( var );
-					unaries.add( Factors.unary( var, 0.0, -500.0 ) ); // seems to work somewhat for SegmentNode
-					//unaries.add( Factors.unary( var, 0.0, -10.0 ) );
-
+					
+					unaries.add( Factors.unary( var, 0.0, hammingCost ) );
+	
 					final List< Variable > varsToConnect = new ArrayList< Variable >();
 					varsToConnect.add( var );
 					for ( Bimap< IndicatorNode, Variable > varmap : varMaps ) {
